@@ -1,7 +1,8 @@
 'use client';
 
 import { useWebcam } from '@/hooks/useWebcam';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import TherapistEmergencyControls from './TherapistEmergencyControls';
 
 interface VideoCallProps {
   appointmentId: string;
@@ -11,12 +12,33 @@ interface VideoCallProps {
 
 export default function VideoCall({ appointmentId, userRole, onEndCall }: VideoCallProps) {
   const { videoRef, isActive, error, startCamera, stopCamera } = useWebcam();
+  const [inmateInfo, setInmateInfo] = useState<{ id: string; name: string; din: string } | null>(null);
 
   useEffect(() => {
     startCamera();
+    
+    // Fetch appointment details to get inmate info for therapists
+    if (userRole === 'therapist') {
+      fetchAppointmentDetails();
+    }
+    
     return () => stopCamera();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchAppointmentDetails = async () => {
+    try {
+      // For demo purposes, we'll use mock data
+      // In production, you'd fetch real appointment data here
+      setInmateInfo({
+        id: 'demo-inmate-id',
+        name: 'James Rodriguez',
+        din: '12345678',
+      });
+    } catch (error) {
+      console.error('Failed to fetch appointment details:', error);
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-gray-900">
@@ -27,6 +49,15 @@ export default function VideoCall({ appointmentId, userRole, onEndCall }: VideoC
           <p className="text-sm text-gray-400">Session ID: {appointmentId}</p>
         </div>
         <div className="flex gap-2">
+          {userRole === 'therapist' && inmateInfo && (
+            <TherapistEmergencyControls
+              appointmentId={appointmentId}
+              inmateId={inmateInfo.id}
+              inmateName={inmateInfo.name}
+              inmateDin={inmateInfo.din}
+              onTerminate={onEndCall}
+            />
+          )}
           <button
             onClick={onEndCall}
             className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-medium"

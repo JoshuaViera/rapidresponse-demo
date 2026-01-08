@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Inmate, Appointment, MedicalHistory, MedicationLog } from '@/lib/types';
 import AppointmentCalendar from '@/components/AppointmentCalendar';
+import CrisisButton from '@/components/CrisisButton';
+import ScheduleAppointmentModal from '@/components/ScheduleAppointmentModal';
 import { formatDateTime } from '@/lib/utils';
 
 export default function InmateDashboard() {
@@ -63,6 +65,14 @@ export default function InmateDashboard() {
     router.push(`/video-session/${appointmentId}`);
   };
 
+  const handleScheduleSuccess = () => {
+    // Refresh appointments after scheduling
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      fetchData(userId);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.clear();
     router.push('/');
@@ -97,6 +107,14 @@ export default function InmateDashboard() {
           </button>
         </div>
       </header>
+
+      {/* Crisis Support - Always Visible */}
+      <div className="container mx-auto px-4 py-6">
+        <CrisisButton
+          inmateId={inmate?.id || ''}
+          inmateName={inmate ? `${inmate.first_name} ${inmate.last_name}` : ''}
+        />
+      </div>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
@@ -209,33 +227,12 @@ export default function InmateDashboard() {
       </div>
 
       {/* Schedule Modal */}
-      {showScheduleModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-xl font-bold mb-4">Schedule Appointment</h3>
-            <p className="text-gray-600 mb-4">
-              This is a demo feature. In production, patients would be able to request 
-              appointments which would be approved by clinical staff.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowScheduleModal(false)}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  alert('Appointment request would be sent to clinical staff for approval');
-                  setShowScheduleModal(false);
-                }}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Request Appointment
-              </button>
-            </div>
-          </div>
-        </div>
+      {showScheduleModal && inmate && (
+        <ScheduleAppointmentModal
+          inmateId={inmate.id}
+          onClose={() => setShowScheduleModal(false)}
+          onSuccess={handleScheduleSuccess}
+        />
       )}
     </div>
   );
